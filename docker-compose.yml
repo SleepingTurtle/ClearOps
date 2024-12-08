@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:17
+    container_name: clearops_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  backend:
+    build: ./backend
+    container_name: clearops_backend
+    command: sh -c "python manage.py runserver 0.0.0.0:8000"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: db
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_DEBUG: ${DJANGO_DEBUG}
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+  frontend:
+    build: ./frontend
+    container_name: clearops_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+    environment:
+      REACT_APP_BACKEND_URL: "http://localhost:8000"
+
+volumes:
+  db_data:

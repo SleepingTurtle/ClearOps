@@ -12,10 +12,17 @@ env_file = BASE_DIR / ".env"
 if env_file.exists():
     environ.Env.read_env(str(env_file))
 
+# Create Django superuser
+
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="fallback-secret")
 DEBUG = env("DJANGO_DEBUG", default=False)
 
 ALLOWED_HOSTS = ["*"]
+
+# CORS Configuration
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
 
 DATABASES = {
     "default": {
@@ -23,7 +30,7 @@ DATABASES = {
         "NAME": env("POSTGRES_DB", default="clearops_db"),
         "USER": env("POSTGRES_USER", default="clearops_user"),
         "PASSWORD": env("POSTGRES_PASSWORD", default="securepassword"),
-        "HOST": env("POSTGRES_HOST", default="db"),
+        "HOST": env("POSTGRES_HOSTs", default="localhost"),
         "PORT": env("POSTGRES_PORT", default="5432"),
     }
 }
@@ -36,10 +43,13 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
     "rest_framework",
+    "payroll",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",

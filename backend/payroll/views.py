@@ -4,13 +4,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from .services import calculate_payroll
-from .models import Employee, WorkEntry
-from .serializers import EmployeeeSerializer, WorkEntrySerializer
+from .models import Employee, WorkEntry, PayrollRun
+from .serializers import EmployeeSerializer, WorkEntrySerializer, PayrollRunSerializer
 
 
 class EmployeeViewSet(viewsets.ModelViewSet):
     queryset = Employee.objects.all()
-    serializer_class = EmployeeeSerializer
+    serializer_class = EmployeeSerializer
     search_fields = ["first_name", "last_name"]
     filterset_fields = ["worker_type", "is_active", "date_joined"]
     ordering_fields = ["first_name", "last_name", "hourly_rate", "date_joined"]
@@ -71,9 +71,35 @@ class PayrollProcessView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        payroll_results = calculate_payroll(payroll_period_start, payroll_period_end)
+        payroll_run = PayrollRun.objects.create(
+            payroll_period_start=payroll_period_start,
+            payroll_period_end=payroll_period_end,
+            notes="Payroll processed via API.",
+        )
+
+        payroll_results = calculate_payroll(
+            payroll_period_start, payroll_period_end, payroll_run
+        )
 
         return Response(
             {"message": "Payroll processed successfully.", "payroll": payroll_results},
             status=status.HTTP_200_OK,
         )
+
+
+class PayrollRunViewSet(viewsets.ModelViewSet):
+    """
+    A viewset that provides the standard actions for PayrollRun
+    """
+
+    queryset = PayrollRun.objects.prefetch_related("work_entries__employee")
+    serializer_class = PayrollRunSerializer
+    # permission_classes = [IsAuthenticated]
+    filter_backends = [
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = ["payroll_period_start", "payroll_period_end"]
+    filterset_fields = ["payroll_period_start", "payroll_period_end", "date_processed"]
+    ordering_fields = ["payroll_period_start", "payroll_period_end", "date_processed"]
+    ordering = ["-date_processed"]

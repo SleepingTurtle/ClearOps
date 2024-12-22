@@ -1,9 +1,17 @@
 from rest_framework import serializers
 
-from .models import Employee, WorkEntry
+from .models import Employee, WorkEntry, PayrollRun
+
+
+class EmployeeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employee
+        fields = "__all__"
 
 
 class WorkEntrySerializer(serializers.ModelSerializer):
+    employee = EmployeeSerializer(read_only=True)
+
     class Meta:
         model = WorkEntry
         fields = "__all__"
@@ -40,10 +48,17 @@ class WorkEntrySerializer(serializers.ModelSerializer):
         return data
 
 
-class EmployeeeSerializer(serializers.ModelSerializer):
-    hire_date = serializers.DateField(read_only=True)
-    work_entry = WorkEntrySerializer(many=True, read_only=True)
+class PayrollRunSerializer(serializers.ModelSerializer):
+    work_entries = WorkEntrySerializer(many=True, read_only=True)
 
     class Meta:
-        model = Employee
+        model = PayrollRun
         fields = "__all__"
+        read_only_fields = ["date_processed"]
+
+    def validate(self, data):
+        if data["payroll_period_end"] < data["payroll_period_start"]:
+            raise serializers.ValidationError(
+                "'payroll_period_end' must be after 'payroll_period_start'."
+            )
+        return data

@@ -3,10 +3,12 @@ from django.db import transaction
 from decimal import Decimal
 from django.utils import timezone
 
-from .models import Employee, WorkEntry
+from .models import Employee, WorkEntry, PayrollRun
 
 
-def calculate_payroll(payroll_period_start, payroll_period_end):
+def calculate_payroll(
+    payroll_period_start, payroll_period_end, payroll_run: PayrollRun
+):
     """
     Processes payroll for all active employees within the specified payroll period.
     """
@@ -51,6 +53,7 @@ def calculate_payroll(payroll_period_start, payroll_period_end):
                 is_paid=True,
                 payment_type="bank_transfer",
                 payment_date=timezone.now().date(),
+                payroll_run=payroll_run,
             )
 
         # Append the result
@@ -62,6 +65,7 @@ def calculate_payroll(payroll_period_start, payroll_period_end):
                 "net_pay": net_pay,
                 "payment_type": "bank_transfer",
                 "payment_date": timezone.now().date(),
+                "payroll_run": payroll_run.id,
             }
         )
 

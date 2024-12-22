@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Employee } from '../types/types';
+import { Employee, PayrollRun } from '../types/types';
 
 const api = axios.create({
   baseURL: '/api',
@@ -26,4 +26,14 @@ export const updateEmployee = async (id: number, employee: Partial<Employee>): P
 // Delete an employee
 export const deleteEmployee = async (id: number): Promise<void> => {
   await api.delete(`/employees/${id}/`);
+};
+
+export const fetchPayrollRuns = async (): Promise<PayrollRun[]> => {
+  const response = await api.get<PayrollRun[]>('/payroll-runs/');
+  return response.data;
+};
+
+export const fetchPayrollRunDetails = async (id: number): Promise<PayrollRun> => {
+  const response = await api.get<PayrollRun>(`/payroll-runs/${id}/`);
+  return response.data;
 };

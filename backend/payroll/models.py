@@ -26,6 +26,20 @@ class Employee(models.Model):
         return f"{self.first_name} {self.last_name}"
 
 
+class PayrollRun(models.Model):
+    payroll_period_start = models.DateField()
+    payroll_period_end = models.DateField()
+    date_processed = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ("payroll_period_start", "payroll_period_end")
+        ordering = ["-date_processed"]
+
+    def __str__(self):
+        return f"Payroll Run: {self.payroll_period_start} to {self.payroll_period_end}"
+
+
 class WorkEntry(models.Model):
     PAYMENT_TYPE_CHOICES = [
         ("cash", "Cash"),
@@ -50,6 +64,13 @@ class WorkEntry(models.Model):
     payment_date = models.DateField(null=True, blank=True)
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    payroll_run = models.ForeignKey(
+        PayrollRun,
+        on_delete=models.CASCADE,
+        related_name="work_entries",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         unique_together = ("employee", "payroll_period_start", "payroll_period_end")

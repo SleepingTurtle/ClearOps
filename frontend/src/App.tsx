@@ -1,16 +1,24 @@
 import React from 'react';
-import { Container, Typography } from '@mui/material'
+import { Container, Typography, Grid } from '@mui/material'
 
 import EmployeeList from './components/EmployeeList'
+import PayrollList from './components/PayrollList';
 
 const App: React.FC = () => {
 
   return (
-    <Container>
-      <Typography variant="h1" align="center" gutterBottom style={{ marginTop: '2rem' }}>
+    <Container maxWidth="lg" style={{ marginTop: '2rem' }}>
+      <Typography variant="h1" align="center" gutterBottom>
         ClearOps Payroll System
       </Typography>
-      <EmployeeList />
+      <Grid container spacing={4}>
+        <Grid item xs={12} md={6}>
+          <EmployeeList />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <PayrollList />
+        </Grid>
+      </Grid>
     </Container>
   )
 }

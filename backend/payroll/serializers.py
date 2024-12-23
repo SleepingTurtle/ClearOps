@@ -11,6 +11,11 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 class WorkEntrySerializer(serializers.ModelSerializer):
     employee = EmployeeSerializer(read_only=True)
+    employee_id = serializers.PrimaryKeyRelatedField(
+        queryset=Employee.objects.filter(is_active=True),
+        source="employee",
+        write_only=True,
+    )
 
     class Meta:
         model = WorkEntry

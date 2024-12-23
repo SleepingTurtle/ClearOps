@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Employee, PayrollRun } from '../types/types';
+import { Employee, PayrollRun, WorkEntry } from '../types/types';
 
 const api = axios.create({
   baseURL: '/api',
@@ -26,6 +26,20 @@ export const updateEmployee = async (id: number, employee: Partial<Employee>): P
 // Delete an employee
 export const deleteEmployee = async (id: number): Promise<void> => {
   await api.delete(`/employees/${id}/`);
+};
+
+// Fetch all active employees
+export const fetchActiveEmployees = async (): Promise<Employee[]> => {
+  const response = await api.get<Employee[]>('/employees/', {
+    params: { is_active: true },
+  });
+  return response.data;
+};
+
+// Submit multiple work entries
+export const submitWorkEntries = async (workEntries: WorkEntry[]): Promise<WorkEntry[]> => {
+  const response = await api.post<WorkEntry[]>('/work-entries/bulk-create/', { work_entries: workEntries });
+  return response.data;
 };
 
 export const fetchPayrollRuns = async (): Promise<PayrollRun[]> => {

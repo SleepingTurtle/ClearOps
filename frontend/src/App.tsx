@@ -3,6 +3,7 @@ import { Container, Typography, Grid } from '@mui/material'
 
 import EmployeeList from './components/EmployeeList'
 import PayrollList from './components/PayrollList';
+import AddWorkEntries from './components/AddWorkEntries';
 
 const App: React.FC = () => {
 
@@ -16,6 +17,9 @@ const App: React.FC = () => {
           <EmployeeList />
         </Grid>
         <Grid item xs={12} md={6}>
+          <AddWorkEntries />
+        </Grid>
+        <Grid item xs={12}>
           <PayrollList />
         </Grid>
       </Grid>

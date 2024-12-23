@@ -1,5 +1,5 @@
 from datetime import datetime
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, filters, status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -28,6 +28,27 @@ class WorkEntryViewSet(viewsets.ModelViewSet):
     filterset_fields = ["employee", "is_paid", "payment_type", "payroll_period_start"]
     ordering_fields = ["payroll_period_start", "payroll_period_end", "payment_date"]
     ordering = ["-payroll_period_start"]
+
+
+class BulkWorkEntryCreateView(generics.CreateAPIView):
+    serializer_class = WorkEntrySerializer
+    # permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        work_entries_data = request.data.get("work_entries", [])
+        if not isinstance(work_entries_data, list):
+            return Response(
+                {"error": "work_entries must be a list."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(data=work_entries_data, many=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serialzier)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
 
 class PayrollProcessView(APIView):

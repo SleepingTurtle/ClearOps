@@ -18,7 +18,7 @@ import {
   AccordionDetails,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { PayrollRun, WorkEntry } from '../types/types';
+import { PayrollRun } from '../types/types';
 import { fetchPayrollRunDetails } from '../services/api';
 
 interface PayrollDetailsProps {

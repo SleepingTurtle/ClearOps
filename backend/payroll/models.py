@@ -29,7 +29,9 @@ class Employee(models.Model):
 class PayrollRun(models.Model):
     payroll_period_start = models.DateField()
     payroll_period_end = models.DateField()
-    date_processed = models.DateTimeField(auto_now_add=True)
+    date_processed = models.DateTimeField(blank=True, null=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    is_closed = models.BooleanField(default=False)
     notes = models.TextField(blank=True, null=True)
 
     class Meta:
@@ -45,9 +47,17 @@ class WorkEntry(models.Model):
         ("cash", "Cash"),
         ("bank_transfer", "Bank Transfer"),
         ("check", "Check"),
+        ("deffered", "Deferred"),
     ]
     employee = models.ForeignKey(
         Employee, on_delete=models.CASCADE, related_name="work_entries"
+    )
+    payroll_run = models.ForeignKey(
+        PayrollRun,
+        on_delete=models.CASCADE,
+        related_name="work_entries",
+        null=True,
+        blank=True,
     )
     payroll_period_start = models.DateField()
     payroll_period_end = models.DateField()
@@ -64,13 +74,11 @@ class WorkEntry(models.Model):
     payment_date = models.DateField(null=True, blank=True)
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    payroll_run = models.ForeignKey(
-        PayrollRun,
-        on_delete=models.CASCADE,
-        related_name="work_entries",
-        null=True,
-        blank=True,
+    gross_pay = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_deductions = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00
     )
+    net_pay = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     class Meta:
         unique_together = ("employee", "payroll_period_start", "payroll_period_end")

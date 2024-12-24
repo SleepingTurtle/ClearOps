@@ -1,30 +1,32 @@
-import React from 'react';
-import { Container, Typography, Grid } from '@mui/material'
+// src/App.tsx
 
-import EmployeeList from './components/EmployeeList'
-import PayrollList from './components/PayrollList';
-import AddWorkEntries from './components/AddWorkEntries';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Box, Container } from '@mui/material';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import Home from './pages/Home';
+import EmployeeManagement from './pages/EmployeeManagement';
+import PayrollRunsPage from './pages/PayrollManagement';
+import NotFound from './pages/NotFound';
 
 const App: React.FC = () => {
-
   return (
-    <Container maxWidth="lg" style={{ marginTop: '2rem' }}>
-      <Typography variant="h1" align="center" gutterBottom>
-        ClearOps Payroll System
-      </Typography>
-      <Grid container spacing={4}>
-        <Grid item xs={12} md={6}>
-          <EmployeeList />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <AddWorkEntries />
-        </Grid>
-        <Grid item xs={12}>
-          <PayrollList />
-        </Grid>
-      </Grid>
-    </Container>
-  )
-}
+    <Router>
+      <Box display="flex" flexDirection="column" minHeight="100vh">
+        <Header />
+        <Container maxWidth="lg" sx={{ flex: 1, mt: 4, mb: 4 }}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/employees" element={<EmployeeManagement />} />
+            <Route path="/payroll-runs" element={<PayrollRunsPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Container>
+        <Footer />
+      </Box>
+    </Router>
+  );
+};
 
-export default App
+export default App;

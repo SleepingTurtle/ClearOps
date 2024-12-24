@@ -34,7 +34,7 @@
 }
 ```
 
-## Process Payroll - POST
+## Payroll Run - POST
 
 ```json
 {

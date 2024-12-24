@@ -11,9 +11,12 @@ export interface Employee {
 
 export interface PayrollRun {
   id: number;
-  payroll_period_start: string; // ISO Date string
-  payroll_period_end: string;   // ISO Date string
-  date_processed: string;       // ISO Date string
+  payroll_period_start: string;
+  payroll_period_end: string;  
+  date_closed: string;
+  date_processed: string;
+  date_created: string;
+  is_closed: boolean;
   notes?: string;
   work_entries: WorkEntry[];
 }
@@ -21,7 +24,7 @@ export interface PayrollRun {
 export interface WorkEntry {
   id: number;
   employee: Employee;
-  payroll_run_id?: number;
+  payroll_run?: number;
   payroll_period_start: string;
   payroll_period_end: string;
   hours_worked?: number;
@@ -30,4 +33,7 @@ export interface WorkEntry {
   payment_type: string;
   payment_date: string; // ISO Date string
   notes?: string;
+  gross_pay?: number;
+  total_deductions?: number;
+  net_pay?: number;
 }

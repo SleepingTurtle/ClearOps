@@ -19,8 +19,32 @@ class WorkEntrySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WorkEntry
-        fields = "__all__"
-        read_only_fields = ["is_paid", "payment_date"]
+        fields = [
+            "id",
+            "employee",
+            "employee_id",
+            "payroll_run",
+            "payroll_period_start",
+            "payroll_period_end",
+            "hours_worked",
+            "days_worked",
+            "is_paid",
+            "payment_type",
+            "payment_date",
+            "notes",
+            "gross_pay",
+            "total_deductions",
+            "net_pay",
+        ]
+        read_only_fields = [
+            "is_paid",
+            "payment_date",
+            "payment_type",
+            "notes",
+            "gross_pay",
+            "total_deductions",
+            "net_pay",
+        ]
 
     def validation(self, data):
         employee = data.get("employee") or self.instance.employee
@@ -59,7 +83,7 @@ class PayrollRunSerializer(serializers.ModelSerializer):
     class Meta:
         model = PayrollRun
         fields = "__all__"
-        read_only_fields = ["date_processed"]
+        read_only_fields = ["date_processed", "date_created", "is_closed"]
 
     def validate(self, data):
         if data["payroll_period_end"] < data["payroll_period_start"]:
@@ -67,3 +91,9 @@ class PayrollRunSerializer(serializers.ModelSerializer):
                 "'payroll_period_end' must be after 'payroll_period_start'."
             )
         return data
+
+
+class PayrollRunCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PayrollRun
+        fields = ["id", "payroll_period_start", "payroll_period_end", "notes"]

@@ -1,3 +1,5 @@
+// src/components/PayrollDetails.tsx
+
 import React, { useEffect, useState } from 'react';
 import {
   Dialog,
@@ -13,11 +15,8 @@ import {
   Paper,
   CircularProgress,
   Box,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
+  Alert,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { PayrollRun } from '../types/types';
 import { fetchPayrollRunDetails } from '../services/api';
 
@@ -70,17 +69,22 @@ const PayrollDetails: React.FC<PayrollDetailsProps> = ({ open, onClose, payrollR
             </Typography>
           </Box>
         ) : error ? (
-          <Typography variant="h6" color="error" align="center" mt={4}>
+          <Alert severity="error" onClose={() => setError('')} sx={{ mb: 2 }}>
             {error}
-          </Typography>
+          </Alert>
         ) : payrollRun ? (
           <div>
             <Typography variant="h6" gutterBottom>
-              Payroll Period: {new Date(payrollRun.payroll_period_start).toLocaleDateString()} -{' '}
-              {new Date(payrollRun.payroll_period_end).toLocaleDateString()}
+              Payroll Period: {payrollRun.payroll_period_start} to {payrollRun.payroll_period_end}
             </Typography>
             <Typography variant="subtitle1" gutterBottom>
-              Date Processed: {new Date(payrollRun.date_processed).toLocaleString()}
+              Date Created: {new Date(payrollRun.date_created).toLocaleString()}
+            </Typography>
+            <Typography variant="subtitle1" gutterBottom>
+              Date Processed: {payrollRun.date_processed ? new Date(payrollRun.date_processed).toLocaleString() : 'N/A'}
+            </Typography>
+            <Typography variant="subtitle1" gutterBottom>
+              Status: {payrollRun.is_closed ? 'Closed' : 'Open'}
             </Typography>
             <Typography variant="subtitle1" gutterBottom>
               Notes: {payrollRun.notes || 'N/A'}
@@ -93,25 +97,31 @@ const PayrollDetails: React.FC<PayrollDetailsProps> = ({ open, onClose, payrollR
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell><strong>ID</strong></TableCell>
                     <TableCell><strong>Employee</strong></TableCell>
                     <TableCell><strong>Worker Type</strong></TableCell>
                     <TableCell><strong>Hours Worked</strong></TableCell>
                     <TableCell><strong>Days Worked</strong></TableCell>
+                    <TableCell><strong>Gross Pay</strong></TableCell>
+                    <TableCell><strong>Total Deductions</strong></TableCell>
+                    <TableCell><strong>Net Pay</strong></TableCell>
                     <TableCell><strong>Payment Type</strong></TableCell>
                     <TableCell><strong>Payment Date</strong></TableCell>
+                    <TableCell><strong>Deferred Payment Date</strong></TableCell>
                     <TableCell><strong>Notes</strong></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {payrollRun.work_entries.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} align="center">
+                      <TableCell colSpan={12} align="center">
                         No work entries found.
                       </TableCell>
                     </TableRow>
                   ) : (
                     payrollRun.work_entries.map((entry) => (
                       <TableRow key={entry.id}>
+                        <TableCell>{entry.id}</TableCell>
                         <TableCell>{`${entry.employee.first_name} ${entry.employee.last_name}`}</TableCell>
                         <TableCell>
                           {entry.employee.worker_type.charAt(0).toUpperCase() +
@@ -119,7 +129,14 @@ const PayrollDetails: React.FC<PayrollDetailsProps> = ({ open, onClose, payrollR
                         </TableCell>
                         <TableCell>{entry.hours_worked ?? '-'}</TableCell>
                         <TableCell>{entry.days_worked ?? '-'}</TableCell>
-                        <TableCell>{entry.payment_type || '-'}</TableCell>
+                        <TableCell>${entry.gross_pay}</TableCell>
+                        <TableCell>${entry.total_deductions}</TableCell>
+                        <TableCell>${entry.net_pay}</TableCell>
+                        <TableCell>
+                          {entry.payment_type
+                            ? entry.payment_type.charAt(0).toUpperCase() + entry.payment_type.slice(1)
+                            : '-'}
+                        </TableCell>
                         <TableCell>
                           {entry.payment_date
                             ? new Date(entry.payment_date).toLocaleDateString()
@@ -132,40 +149,6 @@ const PayrollDetails: React.FC<PayrollDetailsProps> = ({ open, onClose, payrollR
                 </TableBody>
               </Table>
             </TableContainer>
-
-            {/* Optional: Detailed View for Each Work Entry */}
-            {payrollRun.work_entries.map((entry) => (
-              <Accordion key={entry.id} style={{ marginTop: '1rem' }}>
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls={`panel-${entry.id}-content`}
-                  id={`panel-${entry.id}-header`}
-                >
-                  <Typography>
-                    {`${entry.employee.first_name} ${entry.employee.last_name}`} -{' '}
-                    {entry.employee.worker_type.charAt(0).toUpperCase() + entry.employee.worker_type.slice(1)}
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography variant="subtitle1">
-                    Payroll Period: {new Date(entry.payroll_period_start).toLocaleDateString()} -{' '}
-                    {new Date(entry.payroll_period_end).toLocaleDateString()}
-                  </Typography>
-                  <Typography variant="subtitle1">
-                    {entry.employee.worker_type === 'hourly' ? `Hours Worked: ${entry.hours_worked}` : `Days Worked: ${entry.days_worked}`}
-                  </Typography>
-                  <Typography variant="subtitle1">
-                    Payment Type: {entry.payment_type || 'N/A'}
-                  </Typography>
-                  <Typography variant="subtitle1">
-                    Payment Date: {entry.payment_date ? new Date(entry.payment_date).toLocaleDateString() : 'N/A'}
-                  </Typography>
-                  <Typography variant="subtitle1">
-                    Notes: {entry.notes || 'N/A'}
-                  </Typography>
-                </AccordionDetails>
-              </Accordion>
-            ))}
           </div>
         ) : (
           <Typography variant="h6" align="center" mt={4}>

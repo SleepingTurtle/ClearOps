@@ -73,7 +73,7 @@ const PayrollList: React.FC = () => {
   return (
     <div>
       <Typography variant="h5" gutterBottom>
-        Payroll Runs
+        Payroll History
       </Typography>
       <TableContainer component={Paper} style={{ marginTop: '2rem' }}>
         <Table>

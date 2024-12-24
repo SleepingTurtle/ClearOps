@@ -2,10 +2,11 @@ from datetime import datetime
 from rest_framework import viewsets, filters, status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import action
 
 from .services import calculate_payroll
 from .models import Employee, WorkEntry, PayrollRun
-from .serializers import EmployeeSerializer, WorkEntrySerializer, PayrollRunSerializer
+from .serializers import EmployeeSerializer, WorkEntrySerializer, PayrollRunSerializer, PayrollRunCreateSerializer
 
 
 class EmployeeViewSet(viewsets.ModelViewSet):
@@ -51,76 +52,48 @@ class BulkWorkEntryCreateView(generics.CreateAPIView):
         )
 
 
-class PayrollProcessView(APIView):
-    """
-    API endpoint to process payroll for a specified period.
-    """
-
-    # permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        """
-        Expects JSON with 'payroll_period_start' and 'payroll_period_end' in 'YYYY-MM-DD' format.
-        """
-        payroll_period_start = request.data.get("payroll_period_start")
-        payroll_period_end = request.data.get("payroll_period_end")
-
-        if not payroll_period_start or not payroll_period_end:
-            return Response(
-                {
-                    "error": "Both 'payroll_period_start' and 'payroll_period_end' are required."
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            payroll_period_start = datetime.strptime(
-                payroll_period_start, "%Y-%m-%d"
-            ).date()
-            payroll_period_end = datetime.strptime(
-                payroll_period_end, "%Y-%m-%d"
-            ).date()
-        except ValueError:
-            return Response(
-                {"error": "Dates must be in 'YYYY-MM-DD' format."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if payroll_period_end < payroll_period_start:
-            return Response(
-                {"error": "'payroll_period_end' must be after 'payroll_period_start'."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        payroll_run = PayrollRun.objects.create(
-            payroll_period_start=payroll_period_start,
-            payroll_period_end=payroll_period_end,
-            notes="Payroll processed via API.",
-        )
-
-        payroll_results = calculate_payroll(
-            payroll_period_start, payroll_period_end, payroll_run
-        )
-
-        return Response(
-            {"message": "Payroll processed successfully.", "payroll": payroll_results},
-            status=status.HTTP_200_OK,
-        )
-
-
 class PayrollRunViewSet(viewsets.ModelViewSet):
     """
     A viewset that provides the standard actions for PayrollRun
     """
-
     queryset = PayrollRun.objects.prefetch_related("work_entries__employee")
     serializer_class = PayrollRunSerializer
     # permission_classes = [IsAuthenticated]
-    filter_backends = [
-        filters.SearchFilter,
-        filters.OrderingFilter,
-    ]
-    search_fields = ["payroll_period_start", "payroll_period_end"]
-    filterset_fields = ["payroll_period_start", "payroll_period_end", "date_processed"]
-    ordering_fields = ["payroll_period_start", "payroll_period_end", "date_processed"]
-    ordering = ["-date_processed"]
+
+    def get_serializer_class(self):
+        if self.action in ['create']:
+            return PayrollRunCreateSerializer
+        return PayrollRunSerializer
+
+    @action(detail=True, methods=["post"])
+    def close(self, request, pk=None):
+        payroll_run = self.get_object()
+        if payroll_run.is_closed:
+            return Response({"error": "Payroll run is already closed."}, status=status.HTTP_400_BAD_REQUEST)
+            
+         # Fetch all associated work entries
+        work_entries = payroll_run.work_entries.all()
+        if not work_entries.exists():
+            return Response({"error": "No work entries to process."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        for entry in work_entries:
+            if entry.employee.worker_type == 'hourly':
+                rate = entry.employee.hourly_rate or Decimal('0.00')
+                entry.gross_pay = Decimal(entry.hours_worked or 0) * rate
+            elif entry.employee.worker_type == 'daily':
+                rate = entry.employee.daily_rate or Decimal('0.00')
+                entry.gross_pay = Decimal(entry.days_worked or 0) * rate
+            else:
+                entry.gross_pay = Decimal('0.00')
+                
+            ntry.net_pay = entry.gross_pay
+            entry.is_paid = True
+            entry.payment_type = 'bank_transfer'
+            entry.payment_date = timezone.now().date()
+            entry.save()
+        
+        payroll_run.is_closed = True
+        payroll_run.date_processed = timezone.now()
+        payroll_run.save()
+        
+        return Response({"message": "Payroll run closed successfully."}, status=status.HTTP_200_OK)
